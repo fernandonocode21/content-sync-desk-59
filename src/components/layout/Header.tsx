@@ -1,10 +1,12 @@
-import { Search, Filter, Plus } from 'lucide-react';
+import { Search, Filter, Plus, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HeaderProps {
   currentView: 'kanban' | 'schedule' | 'management' | 'ideas';
 }
 
 export const Header = ({ currentView }: HeaderProps) => {
+  const { signOut } = useAuth();
   const getTitle = () => {
     switch (currentView) {
       case 'ideas':
@@ -66,6 +68,11 @@ export const Header = ({ currentView }: HeaderProps) => {
             {currentView === 'kanban' && 'Novo Vídeo'}
             {currentView === 'schedule' && 'Agendar'}
             {currentView === 'management' && 'Adicionar'}
+          </button>
+
+          {/* Logout Button */}
+          <button onClick={signOut} className="btn-ghost text-red-500 hover:text-red-600">
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </div>

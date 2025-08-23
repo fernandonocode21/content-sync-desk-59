@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 // Types
 export interface Canal {
@@ -14,6 +17,7 @@ export interface Canal {
   logo_url?: string;
   dias_postagem: string[];
   horarios_postagem: string[];
+  user_id?: string;
 }
 
 export interface Usuario {
@@ -35,6 +39,7 @@ export interface Video {
   data_agendada?: Date;
   hora_agendada?: string;
   thumbnail_pronta: boolean;
+  user_id?: string;
 }
 
 export interface Idea {
@@ -46,6 +51,7 @@ export interface Idea {
   canal_cor: string;
   data_criacao: Date;
   status: 'pendente' | 'aprovada' | 'rejeitada';
+  user_id?: string;
 }
 
 export interface ScheduledVideo {
@@ -57,173 +63,8 @@ export interface ScheduledVideo {
   hora_agendada: string;
   link_youtube?: string;
   status: 'agendado' | 'publicado';
+  user_id?: string;
 }
-
-// Initial Data
-const initialCanais: Canal[] = [
-  {
-    id: '1',
-    nome: 'Money Minds',
-    link: 'https://youtube.com/@moneyminds',
-    lingua: 'Português',
-    nicho: 'Finanças',
-    sub_nicho: 'Investimentos',
-    micro_nicho: 'Ações & Fundos',
-    freq_postagem: '3x por semana',
-    cor: '#4ECDC4',
-    logo_url: '/placeholder.svg',
-    dias_postagem: ['Segunda', 'Quarta', 'Sexta'],
-    horarios_postagem: ['09:00', '14:00', '19:00'],
-  },
-  {
-    id: '2',
-    nome: 'Tech Insights',
-    link: 'https://youtube.com/@techinsights',
-    lingua: 'Português',
-    nicho: 'Tecnologia',
-    sub_nicho: 'Inteligência Artificial',
-    micro_nicho: 'IA no Cotidiano',
-    freq_postagem: '2x por semana',
-    cor: '#45B7D1',
-    logo_url: '/placeholder.svg',
-    dias_postagem: ['Terça', 'Quinta'],
-    horarios_postagem: ['10:00', '16:00'],
-  },
-  {
-    id: '3',
-    nome: 'Lifestyle Hub',
-    link: 'https://youtube.com/@lifestylehub',
-    lingua: 'Português',
-    nicho: 'Lifestyle',
-    sub_nicho: 'Produtividade',
-    micro_nicho: 'Hábitos Saudáveis',
-    freq_postagem: '2x por semana',
-    cor: '#96CEB4',
-    logo_url: '/placeholder.svg',
-    dias_postagem: ['Domingo', 'Quarta'],
-    horarios_postagem: ['08:00', '20:00'],
-  },
-];
-
-const initialUsuarios: Usuario[] = [
-  { id: '1', nome: 'Ana Silva', email: 'ana@darkchannels.com', role: 'Roteirista' },
-  { id: '2', nome: 'Carlos Santos', email: 'carlos@darkchannels.com', role: 'Editor' },
-  { id: '3', nome: 'Pedro Costa', email: 'pedro@darkchannels.com', role: 'Narrador' },
-  { id: '4', nome: 'Maria Oliveira', email: 'maria@darkchannels.com', role: 'Gerente' },
-];
-
-const initialVideos: Video[] = [
-  {
-    id: '1',
-    titulo: '10 Segredos do Sucesso Financeiro',
-    status: 'ideias',
-    canal_id: '1',
-    canal_nome: 'Money Minds',
-    responsavel_id: '1',
-    responsavel_nome: 'Ana Silva',
-    data_criacao: new Date(),
-    thumbnail_pronta: false,
-  },
-  {
-    id: '2',
-    titulo: 'Como Ganhar Dinheiro Online em 2024',
-    status: 'roteiro',
-    canal_id: '1',
-    canal_nome: 'Money Minds',
-    responsavel_id: '2',
-    responsavel_nome: 'Carlos Santos',
-    data_criacao: new Date(),
-    thumbnail_pronta: true,
-  },
-  {
-    id: '3',
-    titulo: 'Investimentos para Iniciantes',
-    status: 'audio',
-    canal_id: '1',
-    canal_nome: 'Money Minds',
-    responsavel_id: '1',
-    responsavel_nome: 'Ana Silva',
-    data_criacao: new Date(),
-    thumbnail_pronta: false,
-  },
-  {
-    id: '4',
-    titulo: 'Criptomoedas: Guia Completo',
-    status: 'edicao',
-    canal_id: '2',
-    canal_nome: 'Tech Insights',
-    responsavel_id: '3',
-    responsavel_nome: 'Pedro Costa',
-    data_criacao: new Date(),
-    thumbnail_pronta: true,
-  },
-  {
-    id: '5',
-    titulo: 'Inteligência Artificial no Cotidiano',
-    status: 'pronto',
-    canal_id: '2',
-    canal_nome: 'Tech Insights',
-    responsavel_id: '4',
-    responsavel_nome: 'Maria Oliveira',
-    data_criacao: new Date(),
-    thumbnail_pronta: true,
-  },
-  {
-    id: '6',
-    titulo: 'Como Criar Rotina Produtiva',
-    status: 'pronto',
-    canal_id: '3',
-    canal_nome: 'Lifestyle Hub',
-    responsavel_id: '1',
-    responsavel_nome: 'Ana Silva',
-    data_criacao: new Date(),
-    thumbnail_pronta: true,
-  },
-  {
-    id: '7',
-    titulo: 'IA no Marketing Digital - ATRASADO',
-    status: 'pronto',
-    canal_id: '2',
-    canal_nome: 'Tech Insights',
-    responsavel_id: '2',
-    responsavel_nome: 'Carlos Santos',
-    data_criacao: new Date(),
-    thumbnail_pronta: false,
-  },
-];
-
-const initialIdeias: Idea[] = [
-  {
-    id: '1',
-    titulo: '15 Dicas de Economia Doméstica',
-    descricao: 'Como economizar dinheiro no dia a dia com dicas práticas',
-    canal_id: '1',
-    canal_nome: 'Money Minds',
-    canal_cor: '#4ECDC4',
-    data_criacao: new Date(),
-    status: 'pendente',
-  },
-  {
-    id: '2',
-    titulo: 'Tendências de IA para 2024',
-    descricao: 'As principais tendências de inteligência artificial',
-    canal_id: '2',
-    canal_nome: 'Tech Insights',
-    canal_cor: '#45B7D1',
-    data_criacao: new Date(),
-    status: 'pendente',
-  },
-  {
-    id: '3',
-    titulo: 'Mindfulness para Produtividade',
-    descricao: 'Como usar mindfulness para ser mais produtivo',
-    canal_id: '3',
-    canal_nome: 'Lifestyle Hub',
-    canal_cor: '#96CEB4',
-    data_criacao: new Date(),
-    status: 'aprovada',
-  },
-];
 
 // Context
 interface AppContextType {
@@ -233,230 +74,738 @@ interface AppContextType {
   videos: Video[];
   ideias: Idea[];
   scheduledVideos: ScheduledVideo[];
+  loading: boolean;
   
   // Canal Actions
-  addCanal: (canal: Omit<Canal, 'id'>) => void;
-  updateCanal: (id: string, canal: Partial<Canal>) => void;
-  deleteCanal: (id: string) => void;
+  addCanal: (canal: Omit<Canal, 'id'>) => Promise<void>;
+  updateCanal: (id: string, canal: Partial<Canal>) => Promise<void>;
+  deleteCanal: (id: string) => Promise<void>;
   
   // Usuario Actions
-  addUsuario: (usuario: Omit<Usuario, 'id'>) => void;
-  updateUsuario: (id: string, usuario: Partial<Usuario>) => void;
-  deleteUsuario: (id: string) => void;
+  addUsuario: (usuario: Omit<Usuario, 'id'>) => Promise<void>;
+  updateUsuario: (id: string, usuario: Partial<Usuario>) => Promise<void>;
+  deleteUsuario: (id: string) => Promise<void>;
   
   // Video Actions
-  updateVideo: (id: string, video: Partial<Video>) => void;
-  addVideo: (video: Omit<Video, 'id'>) => void;
-  deleteVideo: (id: string) => void;
-  moveVideoToIdeas: (videoId: string) => void;
-  scheduleVideo: (video: Video, data_agendada: Date, hora_agendada: string, link_youtube?: string) => void;
-  unscheduleVideo: (id: string) => void;
+  updateVideo: (id: string, video: Partial<Video>) => Promise<void>;
+  addVideo: (video: Omit<Video, 'id'>) => Promise<void>;
+  deleteVideo: (id: string) => Promise<void>;
+  moveVideoToIdeas: (videoId: string) => Promise<void>;
+  scheduleVideo: (video: Video, data_agendada: Date, hora_agendada: string, link_youtube?: string) => Promise<void>;
+  unscheduleVideo: (id: string) => Promise<void>;
   
   // Idea Actions
-  addIdeia: (idea: Omit<Idea, 'id'>) => void;
-  updateIdeia: (id: string, idea: Partial<Idea>) => void;
-  deleteIdeia: (id: string) => void;
-  approveIdeaToProduction: (ideaId: string) => void;
+  addIdeia: (idea: Omit<Idea, 'id'>) => Promise<void>;
+  updateIdeia: (id: string, idea: Partial<Idea>) => Promise<void>;
+  deleteIdeia: (id: string) => Promise<void>;
+  approveIdeaToProduction: (ideaId: string) => Promise<void>;
+  
+  // Refresh data
+  refreshData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [canais, setCanais] = useState<Canal[]>(initialCanais);
-  const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
-  const [videos, setVideos] = useState<Video[]>(initialVideos);
-  const [ideias, setIdeias] = useState<Idea[]>(initialIdeias);
-  const [scheduledVideos, setScheduledVideos] = useState<ScheduledVideo[]>([
-    {
-      id: 'scheduled-1',
-      titulo: 'Como Investir na Bolsa para Iniciantes',
-      canal_nome: 'Money Minds',
-      canal_cor: '#4ECDC4',
-      data_agendada: new Date(2025, 0, 25), // 25 de janeiro de 2025
-      hora_agendada: '09:00',
-      status: 'agendado',
-      link_youtube: ''
-    },
-    {
-      id: 'scheduled-2',
-      titulo: 'IA no Futuro do Trabalho',
-      canal_nome: 'Tech Insights',
-      canal_cor: '#45B7D1',
-      data_agendada: new Date(2025, 0, 25), // 25 de janeiro de 2025
-      hora_agendada: '14:00',
-      status: 'agendado',
-      link_youtube: 'https://www.youtube.com/watch?v=example'
-    },
-    {
-      id: 'scheduled-3',
-      titulo: 'Produtividade para Millennials',
-      canal_nome: 'Lifestyle Hub',
-      canal_cor: '#96CEB4',
-      data_agendada: new Date(2025, 0, 26), // 26 de janeiro de 2025
-      hora_agendada: '08:00',
-      status: 'agendado',
-      link_youtube: ''
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [canais, setCanais] = useState<Canal[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [ideias, setIdeias] = useState<Idea[]>([]);
+  const [scheduledVideos, setScheduledVideos] = useState<ScheduledVideo[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load all data
+  const refreshData = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      await Promise.all([
+        loadCanais(),
+        loadUsuarios(),
+        loadVideos(),
+        loadIdeias(),
+        loadScheduledVideos()
+      ]);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar dados",
+        description: error.message,
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  // Load functions
+  const loadCanais = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('canais')
+      .select('*')
+      .eq('user_id', user.id);
+    
+    if (error) throw error;
+    
+    const canaisFormatted = data.map(canal => ({
+      ...canal,
+      dias_postagem: canal.dias_postagem || [],
+      horarios_postagem: canal.horarios_postagem || []
+    }));
+    
+    setCanais(canaisFormatted);
+  };
+
+  const loadUsuarios = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*');
+    
+    if (error) throw error;
+    setUsuarios(data || []);
+  };
+
+  const loadVideos = async () => {
+    if (!user) return;
+    
+    const { data: videosData, error } = await supabase
+      .from('videos')
+      .select(`
+        *,
+        canais!inner(nome)
+      `)
+      .eq('user_id', user.id);
+    
+    if (error) throw error;
+
+    // Get responsavel names separately
+    const userIds = videosData?.map(v => v.responsavel_id).filter(Boolean) || [];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, nome')
+      .in('id', userIds);
+    
+    const videosFormatted: Video[] = (videosData || []).map(video => ({
+      id: video.id,
+      titulo: video.titulo,
+      status: video.status as 'ideias' | 'roteiro' | 'audio' | 'edicao' | 'pronto',
+      canal_id: video.canal_id,
+      canal_nome: (video.canais as any)?.nome || '',
+      responsavel_id: video.responsavel_id,
+      responsavel_nome: profiles?.find(p => p.id === video.responsavel_id)?.nome,
+      data_criacao: new Date(video.data_criacao),
+      data_agendada: video.data_agendada ? new Date(video.data_agendada) : undefined,
+      hora_agendada: video.hora_agendada,
+      thumbnail_pronta: video.thumbnail_pronta,
+      user_id: video.user_id
+    }));
+    
+    setVideos(videosFormatted);
+  };
+
+  const loadIdeias = async () => {
+    if (!user) return;
+    
+    const { data: ideiasData, error } = await supabase
+      .from('ideias')
+      .select(`
+        *,
+        canais!inner(nome, cor)
+      `)
+      .eq('user_id', user.id);
+    
+    if (error) throw error;
+    
+    const ideiasFormatted: Idea[] = (ideiasData || []).map(ideia => ({
+      id: ideia.id,
+      titulo: ideia.titulo,
+      descricao: ideia.descricao || '',
+      canal_id: ideia.canal_id,
+      canal_nome: (ideia.canais as any)?.nome || '',
+      canal_cor: (ideia.canais as any)?.cor || '#000',
+      data_criacao: new Date(ideia.data_criacao),
+      status: ideia.status as 'pendente' | 'aprovada' | 'rejeitada',
+      user_id: ideia.user_id
+    }));
+    
+    setIdeias(ideiasFormatted);
+  };
+
+  const loadScheduledVideos = async () => {
+    if (!user) return;
+    
+    const { data: scheduledData, error } = await supabase
+      .from('scheduled_videos')
+      .select(`
+        *,
+        canais!inner(nome, cor)
+      `)
+      .eq('user_id', user.id);
+    
+    if (error) throw error;
+    
+    const scheduledFormatted: ScheduledVideo[] = (scheduledData || []).map(video => ({
+      id: video.id,
+      titulo: video.titulo,
+      canal_nome: (video.canais as any)?.nome || '',
+      canal_cor: (video.canais as any)?.cor || '#000',
+      data_agendada: new Date(video.data_agendada),
+      hora_agendada: video.hora_agendada,
+      link_youtube: video.link_youtube,
+      status: video.status as 'agendado' | 'publicado',
+      user_id: video.user_id
+    }));
+    
+    setScheduledVideos(scheduledFormatted);
+  };
+
+  // Load data when user changes
+  useEffect(() => {
+    if (user) {
+      refreshData();
+    } else {
+      // Clear data when user logs out
+      setCanais([]);
+      setUsuarios([]);
+      setVideos([]);
+      setIdeias([]);
+      setScheduledVideos([]);
+    }
+  }, [user]);
 
   // Canal Actions
-  const addCanal = (canal: Omit<Canal, 'id'>) => {
-    const newCanal = { ...canal, id: Date.now().toString() };
-    setCanais(prev => [...prev, newCanal]);
+  const addCanal = async (canal: Omit<Canal, 'id'>) => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('canais')
+        .insert({
+          ...canal,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      const newCanal = {
+        ...data,
+        dias_postagem: data.dias_postagem || [],
+        horarios_postagem: data.horarios_postagem || []
+      };
+      
+      setCanais(prev => [...prev, newCanal]);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Canal criado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar canal",
+        description: error.message,
+      });
+    }
   };
 
-  const updateCanal = (id: string, canalUpdate: Partial<Canal>) => {
-    setCanais(prev => prev.map(canal => 
-      canal.id === id ? { ...canal, ...canalUpdate } : canal
-    ));
+  const updateCanal = async (id: string, canalUpdate: Partial<Canal>) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('canais')
+        .update(canalUpdate)
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setCanais(prev => prev.map(canal => 
+        canal.id === id ? { ...canal, ...canalUpdate } : canal
+      ));
+      
+      toast({
+        title: "Sucesso!",
+        description: "Canal atualizado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar canal",
+        description: error.message,
+      });
+    }
   };
 
-  const deleteCanal = (id: string) => {
-    setCanais(prev => prev.filter(canal => canal.id !== id));
-    // Remove videos do canal deletado
-    setVideos(prev => prev.filter(video => video.canal_id !== id));
-    setIdeias(prev => prev.filter(idea => idea.canal_id !== id));
+  const deleteCanal = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('canais')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setCanais(prev => prev.filter(canal => canal.id !== id));
+      setVideos(prev => prev.filter(video => video.canal_id !== id));
+      setIdeias(prev => prev.filter(idea => idea.canal_id !== id));
+      
+      toast({
+        title: "Sucesso!",
+        description: "Canal excluído com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir canal",
+        description: error.message,
+      });
+    }
   };
 
   // Usuario Actions
-  const addUsuario = (usuario: Omit<Usuario, 'id'>) => {
-    const newUsuario = { ...usuario, id: Date.now().toString() };
-    setUsuarios(prev => [...prev, newUsuario]);
+  const addUsuario = async (usuario: Omit<Usuario, 'id'>) => {
+    // Note: This function creates a profile, but requires auth.users to exist first
+    // In a real app, this would be handled by the signup process
+    console.warn('addUsuario: This function should only be used with existing auth users');
+    return;
   };
 
-  const updateUsuario = (id: string, usuarioUpdate: Partial<Usuario>) => {
-    setUsuarios(prev => prev.map(usuario => 
-      usuario.id === id ? { ...usuario, ...usuarioUpdate } : usuario
-    ));
+  const updateUsuario = async (id: string, usuarioUpdate: Partial<Usuario>) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(usuarioUpdate)
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setUsuarios(prev => prev.map(usuario => 
+        usuario.id === id ? { ...usuario, ...usuarioUpdate } : usuario
+      ));
+      
+      toast({
+        title: "Sucesso!",
+        description: "Usuário atualizado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar usuário",
+        description: error.message,
+      });
+    }
   };
 
-  const deleteUsuario = (id: string) => {
-    setUsuarios(prev => prev.filter(usuario => usuario.id !== id));
-    // Remove responsável dos vídeos
-    setVideos(prev => prev.map(video => 
-      video.responsavel_id === id 
-        ? { ...video, responsavel_id: undefined, responsavel_nome: undefined }
-        : video
-    ));
+  const deleteUsuario = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setUsuarios(prev => prev.filter(usuario => usuario.id !== id));
+      setVideos(prev => prev.map(video => 
+        video.responsavel_id === id 
+          ? { ...video, responsavel_id: undefined, responsavel_nome: undefined }
+          : video
+      ));
+      
+      toast({
+        title: "Sucesso!",
+        description: "Usuário excluído com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir usuário",
+        description: error.message,
+      });
+    }
   };
 
   // Video Actions
-  const updateVideo = (id: string, videoUpdate: Partial<Video>) => {
-    setVideos(prev => prev.map(video => 
-      video.id === id ? { ...video, ...videoUpdate } : video
-    ));
+  const updateVideo = async (id: string, videoUpdate: Partial<Video>) => {
+    if (!user) return;
+    
+    try {
+      // Convert dates to ISO strings for Supabase
+      const updateData: any = { ...videoUpdate };
+      delete updateData.user_id;
+      delete updateData.canal_nome;
+      delete updateData.responsavel_nome;
+      
+      if (updateData.data_criacao) {
+        updateData.data_criacao = updateData.data_criacao.toISOString();
+      }
+      if (updateData.data_agendada) {
+        updateData.data_agendada = updateData.data_agendada.toISOString();
+      }
+      
+      const { error } = await supabase
+        .from('videos')
+        .update(updateData)
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setVideos(prev => prev.map(video => 
+        video.id === id ? { ...video, ...videoUpdate } : video
+      ));
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar vídeo",
+        description: error.message,
+      });
+    }
   };
 
-  const addVideo = (video: Omit<Video, 'id'>) => {
-    const newVideo = { ...video, id: Date.now().toString() };
-    setVideos(prev => [...prev, newVideo]);
+  const addVideo = async (video: Omit<Video, 'id'>) => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('videos')
+        .insert({
+          titulo: video.titulo,
+          status: video.status,
+          canal_id: video.canal_id,
+          responsavel_id: video.responsavel_id,
+          data_criacao: video.data_criacao.toISOString(),
+          data_agendada: video.data_agendada?.toISOString(),
+          hora_agendada: video.hora_agendada,
+          thumbnail_pronta: video.thumbnail_pronta,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      const newVideo: Video = {
+        id: data.id,
+        titulo: data.titulo,
+        status: data.status as 'ideias' | 'roteiro' | 'audio' | 'edicao' | 'pronto',
+        canal_id: data.canal_id,
+        canal_nome: video.canal_nome,
+        responsavel_id: data.responsavel_id,
+        responsavel_nome: video.responsavel_nome,
+        data_criacao: new Date(data.data_criacao),
+        data_agendada: data.data_agendada ? new Date(data.data_agendada) : undefined,
+        hora_agendada: data.hora_agendada,
+        thumbnail_pronta: data.thumbnail_pronta,
+        user_id: data.user_id
+      };
+      
+      setVideos(prev => [...prev, newVideo]);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Vídeo criado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar vídeo",
+        description: error.message,
+      });
+    }
   };
 
-  const deleteVideo = (id: string) => {
-    setVideos(prev => prev.filter(video => video.id !== id));
+  const deleteVideo = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setVideos(prev => prev.filter(video => video.id !== id));
+      
+      toast({
+        title: "Sucesso!",
+        description: "Vídeo excluído com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir vídeo",
+        description: error.message,
+      });
+    }
   };
 
-  const moveVideoToIdeas = (videoId: string) => {
+  const moveVideoToIdeas = async (videoId: string) => {
+    if (!user) return;
+    
     const video = videos.find(v => v.id === videoId);
     if (!video) return;
     
     const canal = canais.find(c => c.id === video.canal_id);
     if (!canal) return;
 
-    // Create idea from video
-    const newIdeia = {
-      titulo: video.titulo,
-      descricao: `Retornado da produção`,
-      canal_id: video.canal_id,
-      canal_nome: video.canal_nome,
-      canal_cor: canal.cor,
-      data_criacao: new Date(),
-      status: 'pendente' as const,
-    };
+    try {
+      // Create idea from video with complete data
+      const newIdeia = {
+        titulo: video.titulo,
+        descricao: 'Retornado da produção',
+        canal_id: video.canal_id,
+        canal_nome: video.canal_nome,
+        canal_cor: canal.cor,
+        data_criacao: new Date(),
+        status: 'pendente' as const,
+      };
 
-    addIdeia(newIdeia);
-    deleteVideo(videoId);
+      await addIdeia(newIdeia);
+      await deleteVideo(videoId);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao mover vídeo",
+        description: error.message,
+      });
+    }
   };
 
-  const scheduleVideo = (video: Video, data_agendada: Date, hora_agendada: string, link_youtube?: string) => {
-    // Remove do kanban (status pronto)
-    setVideos(prev => prev.filter(v => v.id !== video.id));
+  const scheduleVideo = async (video: Video, data_agendada: Date, hora_agendada: string, link_youtube?: string) => {
+    if (!user) return;
     
-    // Adiciona aos vídeos agendados
-    const scheduledVideo: ScheduledVideo = {
-      id: video.id,
-      titulo: video.titulo,
-      canal_nome: video.canal_nome,
-      canal_cor: canais.find(c => c.id === video.canal_id)?.cor || 'channel-business',
-      data_agendada,
-      hora_agendada,
-      link_youtube,
-      status: 'agendado',
-    };
-    
-    setScheduledVideos(prev => [scheduledVideo, ...prev]);
+    try {
+      // Create scheduled video
+      const { error } = await supabase
+        .from('scheduled_videos')
+        .insert({
+          titulo: video.titulo,
+          canal_id: video.canal_id,
+          data_agendada: data_agendada.toISOString(),
+          hora_agendada,
+          link_youtube,
+          status: 'agendado',
+          user_id: user.id
+        });
+
+      if (error) throw error;
+      
+      // Remove from videos
+      await deleteVideo(video.id);
+      
+      // Refresh scheduled videos
+      await loadScheduledVideos();
+      
+      toast({
+        title: "Sucesso!",
+        description: "Vídeo agendado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao agendar vídeo",
+        description: error.message,
+      });
+    }
   };
 
-  const unscheduleVideo = (id: string) => {
+  const unscheduleVideo = async (id: string) => {
+    if (!user) return;
+    
     const scheduled = scheduledVideos.find(v => v.id === id);
     if (!scheduled) return;
 
-    // Remove dos agendados
-    setScheduledVideos(prev => prev.filter(v => v.id !== id));
-    
-    // Volta para kanban como pronto
-    const canal = canais.find(c => c.nome === scheduled.canal_nome);
-    if (canal) {
-      const backToVideo: Video = {
-        id: scheduled.id,
+    try {
+      // Delete from scheduled videos
+      const { error: deleteError } = await supabase
+        .from('scheduled_videos')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (deleteError) throw deleteError;
+      
+      // Add back to videos
+      const backToVideo = {
         titulo: scheduled.titulo,
-        status: 'pronto',
-        canal_id: canal.id,
+        status: 'pronto' as const,
+        canal_id: canais.find(c => c.nome === scheduled.canal_nome)?.id || '',
         canal_nome: scheduled.canal_nome,
+        responsavel_id: undefined,
+        responsavel_nome: undefined,
         data_criacao: new Date(),
+        data_agendada: undefined,
+        hora_agendada: undefined,
         thumbnail_pronta: true,
       };
       
-      setVideos(prev => [backToVideo, ...prev]);
+      await addVideo(backToVideo);
+      
+      setScheduledVideos(prev => prev.filter(v => v.id !== id));
+      
+      toast({
+        title: "Sucesso!",
+        description: "Agendamento cancelado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao cancelar agendamento",
+        description: error.message,
+      });
     }
   };
 
   // Idea Actions
-  const addIdeia = (idea: Omit<Idea, 'id'>) => {
-    const newIdeia = { ...idea, id: Date.now().toString() };
-    setIdeias(prev => [newIdeia, ...prev]);
+  const addIdeia = async (idea: Omit<Idea, 'id'>) => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('ideias')
+        .insert({
+          titulo: idea.titulo,
+          descricao: idea.descricao,
+          canal_id: idea.canal_id,
+          status: idea.status,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      const newIdeia: Idea = {
+        id: data.id,
+        titulo: data.titulo,
+        descricao: data.descricao || '',
+        canal_id: data.canal_id,
+        canal_nome: idea.canal_nome,
+        canal_cor: idea.canal_cor,
+        data_criacao: new Date(data.data_criacao),
+        status: data.status as 'pendente' | 'aprovada' | 'rejeitada',
+        user_id: data.user_id
+      };
+      
+      setIdeias(prev => [newIdeia, ...prev]);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Ideia criada com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar ideia",
+        description: error.message,
+      });
+    }
   };
 
-  const approveIdeaToProduction = (ideaId: string) => {
+  const approveIdeaToProduction = async (ideaId: string) => {
+    if (!user) return;
+    
     const idea = ideias.find(i => i.id === ideaId);
     if (!idea) return;
 
-    // Create video from idea
-    const newVideo = {
-      titulo: idea.titulo,
-      status: 'ideias' as const,
-      canal_id: idea.canal_id,
-      canal_nome: idea.canal_nome,
-      responsavel_id: undefined,
-      responsavel_nome: undefined,
-      data_criacao: new Date(),
-      data_agendada: undefined,
-      hora_agendada: undefined,
-      thumbnail_pronta: false,
-    };
+    try {
+      // Create video from idea
+      const newVideo = {
+        titulo: idea.titulo,
+        status: 'ideias' as const,
+        canal_id: idea.canal_id,
+        canal_nome: idea.canal_nome,
+        responsavel_id: undefined,
+        responsavel_nome: undefined,
+        data_criacao: new Date(),
+        data_agendada: undefined,
+        hora_agendada: undefined,
+        thumbnail_pronta: false,
+      };
 
-    addVideo(newVideo);
-    deleteIdeia(ideaId);
+      await addVideo(newVideo);
+      await deleteIdeia(ideaId);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Ideia aprovada para produção.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao aprovar ideia",
+        description: error.message,
+      });
+    }
   };
 
-  const updateIdeia = (id: string, ideiaUpdate: Partial<Idea>) => {
-    setIdeias(prev => prev.map(idea => 
-      idea.id === id ? { ...idea, ...ideiaUpdate } : idea
-    ));
+  const updateIdeia = async (id: string, ideiaUpdate: Partial<Idea>) => {
+    if (!user) return;
+    
+    try {
+      // Convert dates and clean data for Supabase
+      const updateData: any = { ...ideiaUpdate };
+      delete updateData.user_id;
+      delete updateData.canal_nome;
+      delete updateData.canal_cor;
+      
+      if (updateData.data_criacao) {
+        updateData.data_criacao = updateData.data_criacao.toISOString();
+      }
+      
+      const { error } = await supabase
+        .from('ideias')
+        .update(updateData)
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setIdeias(prev => prev.map(idea => 
+        idea.id === id ? { ...idea, ...ideiaUpdate } : idea
+      ));
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar ideia",
+        description: error.message,
+      });
+    }
   };
 
-  const deleteIdeia = (id: string) => {
-    setIdeias(prev => prev.filter(idea => idea.id !== id));
+  const deleteIdeia = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('ideias')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setIdeias(prev => prev.filter(idea => idea.id !== id));
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir ideia",
+        description: error.message,
+      });
+    }
   };
 
   const value: AppContextType = {
@@ -465,6 +814,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     videos,
     ideias,
     scheduledVideos,
+    loading,
     addCanal,
     updateCanal,
     deleteCanal,
@@ -481,6 +831,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     updateIdeia,
     deleteIdeia,
     approveIdeaToProduction,
+    refreshData,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
