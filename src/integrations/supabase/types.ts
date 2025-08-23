@@ -14,7 +14,231 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      canais: {
+        Row: {
+          cor: string
+          created_at: string
+          dias_postagem: string[]
+          freq_postagem: string
+          horarios_postagem: string[]
+          id: string
+          lingua: string
+          link: string
+          logo_url: string | null
+          micro_nicho: string
+          nicho: string
+          nome: string
+          sub_nicho: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cor: string
+          created_at?: string
+          dias_postagem?: string[]
+          freq_postagem: string
+          horarios_postagem?: string[]
+          id?: string
+          lingua: string
+          link: string
+          logo_url?: string | null
+          micro_nicho: string
+          nicho: string
+          nome: string
+          sub_nicho: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cor?: string
+          created_at?: string
+          dias_postagem?: string[]
+          freq_postagem?: string
+          horarios_postagem?: string[]
+          id?: string
+          lingua?: string
+          link?: string
+          logo_url?: string | null
+          micro_nicho?: string
+          nicho?: string
+          nome?: string
+          sub_nicho?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ideias: {
+        Row: {
+          canal_id: string
+          created_at: string
+          data_criacao: string
+          descricao: string | null
+          id: string
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          canal_id: string
+          created_at?: string
+          data_criacao?: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          canal_id?: string
+          created_at?: string
+          data_criacao?: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ideias_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          nome: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      scheduled_videos: {
+        Row: {
+          canal_id: string
+          created_at: string
+          data_agendada: string
+          hora_agendada: string
+          id: string
+          link_youtube: string | null
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          canal_id: string
+          created_at?: string
+          data_agendada: string
+          hora_agendada: string
+          id?: string
+          link_youtube?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          canal_id?: string
+          created_at?: string
+          data_agendada?: string
+          hora_agendada?: string
+          id?: string
+          link_youtube?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_videos_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      videos: {
+        Row: {
+          canal_id: string
+          created_at: string
+          data_agendada: string | null
+          data_criacao: string
+          hora_agendada: string | null
+          id: string
+          responsavel_id: string | null
+          status: string
+          thumbnail_pronta: boolean
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          canal_id: string
+          created_at?: string
+          data_agendada?: string | null
+          data_criacao?: string
+          hora_agendada?: string | null
+          id?: string
+          responsavel_id?: string | null
+          status: string
+          thumbnail_pronta?: boolean
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          canal_id?: string
+          created_at?: string
+          data_agendada?: string | null
+          data_criacao?: string
+          hora_agendada?: string | null
+          id?: string
+          responsavel_id?: string | null
+          status?: string
+          thumbnail_pronta?: boolean
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "canais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
