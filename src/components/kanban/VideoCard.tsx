@@ -1,6 +1,11 @@
 import { Clock, User, Hash } from 'lucide-react';
 import type { Video } from '@/contexts/AppContext';
 import { VideoCardActions } from './VideoCardActions';
+import { Copy, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from '@/hooks/use-toast';
 import { useApp } from '@/contexts/AppContext';
 
 interface VideoCardProps {
@@ -33,10 +38,41 @@ export const VideoCard = ({ video, onDragStart, onDragEnd, onThumbnailToggle }: 
       className={`video-card ${getChannelColor(canalCor)} relative pb-12`}
       style={{ borderLeftColor: canalCor }}
     >
-      {/* Video Title */}
-      <h3 className="font-medium text-foreground mb-3 line-clamp-2 pr-8">
-        {video.titulo}
-      </h3>
+      {/* Video Title with Copy */}
+      <div className="flex items-start justify-between mb-3">
+        <h3 className="font-medium text-foreground line-clamp-2 flex-1 pr-2">
+          {video.titulo}
+        </h3>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            navigator.clipboard.writeText(video.titulo);
+            toast({
+              title: "Copiado!",
+              description: "Título copiado para a área de transferência"
+            });
+          }}
+          className="flex-shrink-0 h-6 w-6 p-0 relative z-10"
+        >
+          <Copy className="w-3 h-3" />
+        </Button>
+      </div>
+
+      {/* Google Drive Link */}
+      {video.google_drive_link && (
+        <div className="mb-3">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.open(video.google_drive_link, '_blank')}
+            className="text-xs"
+          >
+            <ExternalLink className="w-3 h-3 mr-1" />
+            Google Drive
+          </Button>
+        </div>
+      )}
 
       {/* Thumbnail Checkbox */}
       <div className="mb-3 relative z-10">

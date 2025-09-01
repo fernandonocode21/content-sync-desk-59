@@ -8,12 +8,22 @@ import { ScheduleView } from '@/components/schedule/ScheduleView';
 import { ManagementView } from '@/components/management/ManagementView';
 import { IdeasBank } from '@/components/ideas/IdeasBank';
 
-type ViewType = 'kanban' | 'schedule' | 'management' | 'ideas';
+type ViewType = 'kanban' | 'schedule' | 'management' | 'ideas' | 'competitors' | 'profile';
 
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<ViewType>('ideas');
+
+  const handleViewChange = (view: ViewType) => {
+    if (view === 'competitors') {
+      navigate('/competitor-channels');
+    } else if (view === 'profile') {
+      navigate('/profile');  
+    } else {
+      setCurrentView(view);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,7 +63,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <Sidebar currentView={currentView} onViewChange={setCurrentView} />
+      <Sidebar currentView={currentView} onViewChange={handleViewChange} />
       
       <div className="flex-1 flex flex-col">
         <Header currentView={currentView} />
