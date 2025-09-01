@@ -23,6 +23,46 @@ export const ScheduleView = () => {
   // Função para calcular próximo slot disponível de um canal
   const getNextAvailableSlot = (canalId: string) => {
     const canal = canais.find(c => c.id === canalId);
+    if (!canal || !canal.dias_postagem || canal.dias_postagem.length === 0) {
+      return null;
+    }
+
+    const today = new Date();
+    const maxDaysAhead = 365;
+    
+    for (let daysAhead = 0; daysAhead < maxDaysAhead; daysAhead++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() + daysAhead);
+      
+      const dayOfWeek = checkDate.getDay();
+      const dayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+      const dayName = dayNames[dayOfWeek];
+      
+      if (canal.dias_postagem.includes(dayName)) {
+        for (const timeSlot of canal.horarios_postagem) {
+          const isOccupied = scheduledVideos.some(video => {
+            const videoDate = new Date(video.data_agendada);
+            return (
+              videoDate.toDateString() === checkDate.toDateString() &&
+              video.hora_agendada === timeSlot
+            );
+          });
+          
+          if (!isOccupied) {
+            return {
+              date: checkDate,
+              time: timeSlot
+            };
+          }
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  const getNextAvailableSlotOld = (canalId: string) => {
+    const canal = canais.find(c => c.id === canalId);
     if (!canal) return { data: 'N/A', hora: 'N/A' };
 
     const today = startOfDay(new Date());
@@ -87,12 +127,9 @@ export const ScheduleView = () => {
     const nextSlot = getNextAvailableSlot(video.canal_id);
     setSelectedVideo(videoId);
     
-    if (nextSlot.data !== 'N/A') {
-      // Convert DD/MM/YYYY to Date object
-      const [day, month, year] = nextSlot.data.split('/');
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      setScheduleDate(date);
-      setScheduleTime(nextSlot.hora);
+    if (nextSlot) {
+      setScheduleDate(nextSlot.date);
+      setScheduleTime(nextSlot.time);
     }
     
     setShowScheduleModal(true);
@@ -284,9 +321,9 @@ export const ScheduleView = () => {
                     <span className="text-sm text-foreground">{video.canal_nome}</span>
                   </div>
                   
-                  <div className="text-xs text-muted-foreground mb-3">
-                    Próximo slot: {nextSlot.data} às {nextSlot.hora}
-                  </div>
+                   <div className="text-xs text-muted-foreground mb-3">
+                     {nextSlot ? `Próximo slot: ${nextSlot.date.toLocaleDateString('pt-BR')} às ${nextSlot.time}` : 'Nenhum slot disponível'}
+                   </div>
                   
                   <div className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium mb-3 ${
                     video.thumbnail_pronta ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'

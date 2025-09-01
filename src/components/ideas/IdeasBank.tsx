@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Plus, Check, X, Lightbulb, ArrowRight, Grid3X3, List, Trash2, Edit } from 'lucide-react';
+import { Plus, Check, X, Lightbulb, ArrowRight, Grid3X3, List, Trash2, Edit, Copy, Undo } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { toast } from '@/hooks/use-toast';
 
 export const IdeasBank = () => {
   const { ideias, canais, addIdeia, updateIdeia, deleteIdeia, approveIdeaToProduction } = useApp();
@@ -23,6 +24,33 @@ export const IdeasBank = () => {
   const handleDeleteIdea = (ideaId: string) => {
     if (confirm('Tem certeza que deseja excluir esta ideia?')) {
       deleteIdeia(ideaId);
+    }
+  };
+
+  const copyContent = (idea: any) => {
+    const content = `${idea.titulo}\n\n${idea.descricao}`;
+    navigator.clipboard.writeText(content);
+    toast({
+      title: "Conteúdo copiado!",
+      description: "Título e descrição copiados para a área de transferência"
+    });
+  };
+
+  const revertIdea = async (ideaId: string) => {
+    if (!confirm('Tem certeza que deseja reverter esta ideia aprovada?')) return;
+    
+    try {
+      await updateIdeia(ideaId, { status: 'pendente' });
+      toast({
+        title: "Ideia revertida!",
+        description: "A ideia foi revertida para o banco de ideias"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao reverter ideia",
+        variant: "destructive"
+      });
     }
   };
 
@@ -251,6 +279,16 @@ export const IdeasBank = () => {
                         {idea.data_criacao.toLocaleDateString('pt-BR')}
                       </div>
                       
+                      <div className="flex gap-1 mb-2">
+                        <button
+                          onClick={() => copyContent(idea)}
+                          className="btn-ghost text-xs px-2 py-1"
+                          title="Copiar conteúdo"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+
                       {idea.status === 'pendente' && (
                         <div className="flex gap-2">
                           <button 
@@ -266,6 +304,18 @@ export const IdeasBank = () => {
                           >
                             <X className="w-3 h-3 mr-1" />
                             Rejeitar
+                          </button>
+                        </div>
+                      )}
+
+                      {idea.status === 'aprovada' && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => revertIdea(idea.id)}
+                            className="btn-ghost text-xs px-3 py-1"
+                          >
+                            <Undo className="w-3 h-3 mr-1" />
+                            Reverter
                           </button>
                         </div>
                       )}
@@ -341,6 +391,14 @@ export const IdeasBank = () => {
                     </td>
                     <td className="p-4">
                       <div className="flex gap-1">
+                        <button
+                          onClick={() => copyContent(idea)}
+                          className="btn-ghost text-xs px-2 py-1"
+                          title="Copiar conteúdo"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                        
                         {idea.status === 'pendente' && (
                           <>
                             <button 
@@ -359,6 +417,17 @@ export const IdeasBank = () => {
                             </button>
                           </>
                         )}
+                        
+                        {idea.status === 'aprovada' && (
+                          <button
+                            onClick={() => revertIdea(idea.id)}
+                            className="btn-ghost text-xs px-2 py-1"
+                            title="Reverter"
+                          >
+                            <Undo className="w-3 h-3" />
+                          </button>
+                        )}
+                        
                         <button
                           onClick={() => handleDeleteIdea(idea.id)}
                           className="btn-ghost p-1 text-destructive"

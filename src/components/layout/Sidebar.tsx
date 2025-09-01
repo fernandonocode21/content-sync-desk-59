@@ -2,8 +2,8 @@ import { LayoutGrid, Calendar, Settings, PlusCircle, Lightbulb } from 'lucide-re
 import { useApp } from '@/contexts/AppContext';
 
 interface SidebarProps {
-  currentView: 'kanban' | 'schedule' | 'management' | 'ideas';
-  onViewChange: (view: 'kanban' | 'schedule' | 'management' | 'ideas') => void;
+  currentView: 'kanban' | 'schedule' | 'management' | 'ideas' | 'competitors' | 'profile';
+  onViewChange: (view: 'kanban' | 'schedule' | 'management' | 'ideas' | 'competitors' | 'profile') => void;
 }
 
 export const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
